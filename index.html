@@ -27,54 +27,43 @@
       overflow: hidden;
     }
 
-    /* ── HEADER ── */
-    header {
+    /* ── LYRICS AREA ── */
+    #stage {
       position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 10;
-      background: var(--bg);
-      border-bottom: 1px solid var(--divider);
-      padding: 10px 16px 8px;
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
+      top: 0; bottom: 56px;
+      left: 0; right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 20px 16px;
+    }
+
+    #song-header {
+      margin-bottom: 20px;
     }
 
     #song-counter {
       font-family: 'Playfair Display', serif;
-      font-size: 11px;
-      letter-spacing: 0.15em;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       color: var(--amber);
-      text-transform: uppercase;
-      flex-shrink: 0;
+      display: block;
+      margin-bottom: 4px;
     }
 
     #song-title {
       font-family: 'Playfair Display', serif;
-      font-size: 17px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
+      line-height: 1.2;
     }
 
     #song-artist {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-dim);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    /* ── LYRICS AREA ── */
-    #stage {
-      position: fixed;
-      top: 48px; bottom: 56px;
-      left: 0; right: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 24px 20px 16px;
+      margin-top: 2px;
+      display: block;
     }
 
     #lyrics {
@@ -159,7 +148,7 @@
     /* ── FONT SIZE BUTTONS ── */
     #font-controls {
       position: fixed;
-      top: 56px;
+      top: 16px;
       right: 10px;
       display: flex;
       flex-direction: column;
@@ -186,18 +175,17 @@
 </head>
 <body>
 
-<header>
-  <span id="song-counter">1 / 1</span>
-  <span id="song-title">—</span>
-  <span id="song-artist"></span>
-</header>
-
 <div id="font-controls">
   <button class="font-btn" id="btn-plus"  aria-label="Powiększ tekst">A+</button>
   <button class="font-btn" id="btn-minus" aria-label="Pomniejsz tekst">A−</button>
 </div>
 
 <div id="stage">
+  <div id="song-header">
+    <span id="song-counter">1 / 1</span>
+    <div id="song-title">—</div>
+    <span id="song-artist"></span>
+  </div>
   <pre id="lyrics"></pre>
 </div>
 
