@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Śpiewnik jubileuszowy – 25 lat razem</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1a1612;
+      --surface:   #221e19;
+      --amber:     #c8893a;
+      --amber-dim: #8a5e24;
+      --text:      #e8ddd0;
+      --text-dim:  #8a7d6e;
+      --divider:   #33291f;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--divider);
+      padding: 10px 16px 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    #song-counter {
+      font-family: 'Playfair Display', serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--amber);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    #song-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    #song-artist {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── LYRICS AREA ── */
+    #stage {
+      position: fixed;
+      top: 48px; bottom: 56px;
+      left: 0; right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 20px 16px;
+    }
+
+    #lyrics {
+      font-size: 18px;
+      line-height: 1.9;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* verse / chorus distinction via blank lines — no extra markup needed */
+
+    /* ── FOOTER NAV ── */
+    footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--bg);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--amber-dim);
+      color: var(--amber);
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      width: 44px; height: 36px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .nav-btn:active { background: var(--amber-dim); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+    #dot-track {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--divider);
+      transition: background 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+    .dot.active {
+      background: var(--amber);
+      transform: scale(1.4);
+    }
+
+    /* ── SWIPE ANIMATION ── */
+    #stage.swipe-left  { animation: swipeL 0.22s ease forwards; }
+    #stage.swipe-right { animation: swipeR 0.22s ease forwards; }
+
+    @keyframes swipeL {
+      0%   { opacity: 1; transform: translateX(0); }
+      40%  { opacity: 0; transform: translateX(-30px); }
+      41%  { opacity: 0; transform: translateX(30px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes swipeR {
+      0%   { opacity: 1; transform: translateX(0); }
+      40%  { opacity: 0; transform: translateX(30px); }
+      41%  { opacity: 0; transform: translateX(-30px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── FONT SIZE BUTTONS ── */
+    #font-controls {
+      position: fixed;
+      top: 56px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 9;
+    }
+    .font-btn {
+      background: var(--surface);
+      border: 1px solid var(--divider);
+      color: var(--text-dim);
+      font-size: 14px;
+      width: 28px; height: 26px;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-btn:active { color: var(--amber); border-color: var(--amber-dim); }
+
+    @media (prefers-reduced-motion: reduce) {
+      #stage.swipe-left, #stage.swipe-right { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span id="song-counter">1 / 1</span>
+  <span id="song-title">—</span>
+  <span id="song-artist"></span>
+</header>
+
+<div id="font-controls">
+  <button class="font-btn" id="btn-plus"  aria-label="Powiększ tekst">A+</button>
+  <button class="font-btn" id="btn-minus" aria-label="Pomniejsz tekst">A−</button>
+</div>
+
+<div id="stage">
+  <pre id="lyrics"></pre>
+</div>
+
+<footer>
+  <button class="nav-btn" id="btn-prev" aria-label="Poprzednia piosenka">‹</button>
+  <div id="dot-track"></div>
+  <button class="nav-btn" id="btn-next" aria-label="Następna piosenka">›</button>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ŚPIEWNIK — wpisz swoje piosenki poniżej
+//  Każda piosenka to obiekt: { title, artist, lyrics }
+//  W lyrics używaj \n dla nowych linii, \n\n dla odstępów między zwrotkami
+// ═══════════════════════════════════════════════════════
+
+const songs = [
+  {
+    title: "Cicha woda",
+    artist: "",
+    lyrics: `Płynął strumyk, przez zielony las,
+a przy brzegu leżał stu kilowy głaz.
+Płynął strumyk, minął jakiś czas,
+stu kilowy głaz gdzieś zginął,
+strumyk płynie tak jak płynął!
+
+Ref.:
+Cicha woda brzegi rwie,
+nie wiesz nawet, jak i gdzie.
+Nie zdążysz nawet zabezpieczyć się,
+bo nie zna nikt metody,
+by się ustrzec cichej wody.
+Cicha woda brzegi rwie,
+w jaki sposób? Kto to wie?
+Ma rację, że tak powiem, to przysłowie:
+Cicha woda brzegi rwie.
+
+Szła dziewczyna przez zielony las.
+Spojrzała na ciebie tylko jeden raz.
+Popatrzyła. Minął jakiś czas,
+lecz widocznie jej uroda
+była jak ta cicha woda.
+
+Płynie strumyk przez zielony las,
+skończył się już dla mnie kawalerski czas.
+Dzisiaj tylko czasem — proszę was —
+jeśli żonka mnie nie słyszy,
+śpiewam sobie jak najciszej.`
+  },
+  {
+    title: "Gdybym miał gitarę",
+    artist: "",
+    lyrics: `Gdybym miał gitarę,
+to bym na niej grał.
+Opowiedziałbym o swej miłości,
+którą przeżyłem sam.
+
+Ref.:
+A wszystko te czarne oczy.
+Gdybym ja je miał.
+Za te czarne, cudne oczęta
+serce, duszę bym dał.
+
+Fajki ja nie palę,
+wódki nie piję,
+ale z żalu, z żalu wielkiego
+ledwie co żyję.
+
+Ludzie mówią: głupi,
+po coś ty ją brał?
+Po coś to dziewczę czarne, figlarne
+mocno pokochał?`
+  },
+  {
+    title: "My Cyganie",
+    artist: "",
+    lyrics: `My Cyganie co pędzimy z wiatrem,
+my Cyganie znamy cały świat!
+My Cyganie wszystkim gramy,
+a śpiewamy sobie tak:
+
+Ref.:
+Ore, ore sza ba da ba da amore.
+Hej! Amore sza ba da ba da.
+O muriaty, o szagriaty,
+hajda trojka na mienia!
+
+Kiedy tańczę, niebo tańczy ze mną.
+Kiedy gwiżdżę, gwiżdże polu wiatr.
+Zamknę oczy, liście więdną,
+kiedy milknę, milczy świat.
+
+Gdy śpiewamy, słucha cała Ziemia.
+Gdy śpiewamy, śpiewa każdy ptak.
+Niechaj każdy z nami śpiewa,
+niech rozbrzmiewa piosnka ta.
+
+Będzie prościej, będzie jaśniej,
+całą radość damy wam.
+Będzie prościej, będzie jaśniej,
+gdy zaśpiewa każdy z was:`
+  },
+  {
+    title: "Jest już za późno",
+    artist: "",
+    lyrics: `Jeszcze zdążymy w dżungli ludzkości siebie odnaleźć,
+tęskność zawrotna przybliża nas.
+Zbiegną się wreszcie tory sieroce naszych dwu planet,
+cudnie spokrewnią się ciała nam.
+
+Ref.:
+Jest już za późno!
+Nie jest za późno!
+Jest już za późno!
+Nie jest za późno!
+Jest już za późno!
+Nie jest za późno!
+
+Jeszcze zdążymy tanio wynająć małą mansardę
+z oknem na rzekę lub też na park.
+Z łożem szerokim, piecem wysokim, ściennym zegarem —
+schodzić będziemy codziennie w świat.
+
+Jeszcze zdążymy naszą miłością siebie zachwycić,
+siebie zachwycić i wszystko w krąg.
+Wojna to będzie straszna, bo czas nas będzie chciał zniszczyć,
+lecz nam się uda zachwycić go.`
+  },
+  {
+    title: "Szła dzieweczka",
+    artist: "",
+    lyrics: `Szła dzieweczka do laseczka
+Do zielonego, do zielonego, do zielonego,
+Napotkała myśliweczka
+Bardzo szwarnego, bardzo szwarnego, bardzo szwarnego.
+
+Ref.:
+Gdzie jest ta ulica, gdzie jest ten dom,
+Gdzie jest ta dziewczyna, co kocham ją.
+Znalazłem ulicę znalazłem dom
+Znalazłem dziewczynę co kocham ją.
+
+Myśliweczku, kochaneczku,
+Bardzom ci rada, bardzom ci rada, bardzom ci rada,
+Dałabym ci chleba z masłem,
+Alem go zjadła, alem go zjadła, alem go zjadła.
+
+Jak żeś zjadła, to żeś zjadła,
+To mi się nie chwal, to mi się nie chwal, to mi się nie chwal,
+Bo jak bym cię w lesie spotkał,
+To bym cię zabrał, to bym cię zabrał, to bym cię zabrał.
+
+Po cóż płaczesz, lamentujesz
+Moja dziewczyno, moja dziewczyno, moja dziewczyno.
+Wypłakałaś swoje oczka,
+Nie miałaś o co, nie miałaś o co, nie miałaś o co.`
+  },
+  {
+    title: "Ale to już było",
+    artist: "",
+    lyrics: `Z wielu pieców się jadło chleb,
+bo od lat przyglądam się światu.
+Nieraz rano zabolał łeb
+i mówili: zmiana klimatu.
+Czasem trafił się wielki raut
+albo feta proletariatu.
+Czasem podróż w najlepszym z aut.
+Częściej szare drogi powiatu.
+
+Ref.:
+Ale to już było i nie wróci więcej.
+I choć tyle się zdarzyło, to do przodu
+wciąż wyrywa głupie serce.
+Ale to już było, znikło gdzieś za nami.
+Choć w papierach lat przybyło,
+to naprawdę wciąż jesteśmy tacy sami.
+
+Na regale kolekcja płyt
+i wywiadów pełne gazety.
+Za oknami kolejny świt
+i w sypialni dzieci oddechy.
+One lecą drogą do gwiazd
+przez niebieski ocean nieba.
+Ale przecież za jakiś czas
+będą mogły same zaśpiewać:`
+  },
+  {
+    title: "Chodź pomaluj mój świat",
+    artist: "",
+    lyrics: `Piszesz mi w liście, że kiedy pada,
+kiedy nasturcje na deszczu mokną,
+siadasz przy stole, wyjmujesz farby
+i kolorowe otwierasz okno.
+Trawy i drzewa są takie szare,
+barwę popiołu przybrały nieba.
+W ciszy tak smutno, szepce zegarek
+o czasie, co mi go nie potrzeba.
+
+Ref.:
+Więc chodź, pomaluj mój świat
+na żółto i na niebiesko.
+Niech na niebie stanie tęcza,
+malowana twoją kredką.
+Więc chodź, pomaluj mi życie,
+niech świat mój się zarumieni.
+Niech mi zalśni w pełnym słońcu,
+kolorami całej ziemi.
+
+Za siódmą górą, za siódmą rzeką,
+swoje sny zamieniasz na pejzaże.
+Niebem się wlecze wyblakłe słońce,
+oświetla ludzkie wybladłe twarze.`
+  },
+  {
+    title: "Chciałem być",
+    artist: "",
+    lyrics: `Chciałem być marynarzem.
+Chciałem mieć tatuaże.
+Podróżować, zwiedzać świat,
+pięknie żyć, garściami życie brać.
+
+Chciałem być piosenkarzem.
+Chciałem mieć pełne sale.
+Podróżować, zwiedzać świat
+i wiele pięknych, pięknych kobiet znać.
+
+Ref.:
+Przemierzyłem cały świat
+od Las Vegas po Krym.
+Zgrałem tysiąc talii kart, które lubią dym.
+Skasowałem kilka bryk, nie żałuję dziś,
+nie żałuję dziś.
+
+Chciałem dać coś dobrego,
+dałem tylko siebie.
+Los okrutnie ze mnie drwił,
+gorzkich nauk nie oszczędził mi.
+
+Chciałem wnieść coś nowego.
+Chciałem mieć więcej wiary.
+Los okrutnie ze mnie drwił,
+mojej wiary nie odebrał mi.`
+  },
+  {
+    title: "Tolerancja",
+    artist: "",
+    lyrics: `Dlaczego nie mówimy o tym,
+co nas boli otwarcie?
+Budować ściany wokół siebie
+— marna sztuka.
+Wrażliwe słowo, czuły dotyk wystarczą.
+Czasami tylko tego pragnę,
+tego szukam.
+
+Ref.:
+Na miły Bóg,
+życie nie tylko po to jest, by brać.
+Życie nie po to, by bezczynnie trwać.
+I aby żyć — siebie samego trzeba dać.
+
+Problemy twoje, moje, nasze boje, polityka.
+A przecież każdy włos jak nasze lata policzony.
+Kto jest bez winy, niechaj pierwszy rzuci kamień.
+Daleko raj, gdy na człowieka się zamykam.`
+  },
+  {
+    title: "Wehikuł czasu",
+    artist: "",
+    lyrics: `Pamiętam dobrze ideał swój.
+Marzeniami żyłem jak król.
+Siódma rano — to dla mnie noc.
+Pracować nie chciałem, włóczyłem się.
+Za to do puszki zamykano mnie.
+Po knajpach grywałem za piwko i chleb.
+Na szyciu bluesa, tak mijał mi dzień.
+
+Ref.:
+Tylko nocą do Klubu "Puls",
+Dżem Session do rana,
+tam królował blues.
+To już minęło, ten klimat, ten luz,
+ci wspaniali ludzie nie powrócą już,
+Nie powrócą już, nie!
+
+Lecz we mnie zostało coś z tamtych lat,
+mój mały, intymny, muzyczny świat.
+Gdy tak wspominam ten miniony czas,
+wiem jedno, że to nie poszło w las.
+Dużo bym dał, by przeżyć to znów —
+wehikuł czasu to byłby cud.
+Mam jeszcze wiarę, odmieni się los,
+znów kwiatek do lufy wetknie im ktoś.`
+  },
+  {
+    title: "Sen o Warszawie",
+    artist: "",
+    lyrics: `Mam, tak samo jak ty,
+miasto moje a w nim
+najpiękniejszy mój świat,
+najpiękniejsze dni.
+Zostawiłem tam kolorowe sny.
+Kiedyś zatrzymam czas.
+I na skrzydłach jak ptak
+będę leciał co sił
+tam, gdzie moje sny,
+i warszawskie kolorowe dni.
+
+Ref.:
+Gdybyś ujrzeć chciał
+nadwiślański świt,
+już dziś wyruszaj ze mną tam.
+Zobaczysz jak przywita pięknie nas
+warszawski dzień.
+
+Mam, tak samo jak ty,
+miasto moje a w nim
+najpiękniejszy mój świat,
+najpiękniejsze dni.
+Zostawiłem tam kolorowe sny.`
+  },
+  {
+    title: "Nie płacz Ewka",
+    artist: "",
+    lyrics: `Nie płacz, Ewka, bo tu miejsca brak
+na twe babskie łzy.
+Po ulicy miłość hula wiatr
+wśród rozbitych szyb.
+Patrz, poeci śliczni prawdy sens roztrwonili w grach.
+W półlitrówkach pustych SOS
+wysyłają w świat.
+
+Ref.:
+Żegnam was, już wiem,
+nie załatwię wszystkich pilnych spraw.
+Idę sam, właśnie tam, gdzie czekają mnie.
+Tam przyjaciół kilku mam od lat.
+Dla nich zawsze śpiewam, dla nich gram.
+Jeszcze raz żegnam was, nie spotkamy się.
+
+Proza życia to przyjaźni kat,
+pęka cienka nić.
+Telewizor, meble, mały fiat,
+oto marzeń szczyt.
+Hej, prorocy moi z gniewnych lat, obrastacie w tłuszcz.
+Już was w swoje szpony dopadł szmal,
+zdrada płynie z ust.`
+  },
+  {
+    title: "Bieszczadzkie anioły",
+    artist: "",
+    lyrics: `Anioły są takie ciche
+zwłaszcza te w Bieszczadach,
+gdy spotkasz takiego w górach
+wiele z nim nie pogadasz.
+Najwyżej na ucho ci powie
+gdy będzie w dobrym humorze,
+że skrzydła nosi w plecaku
+nawet przy dobrej pogodzie.
+
+Ref.:
+Anioły bieszczadzkie, bieszczadzkie anioły,
+dużo w was radości i dobrej pogody.
+Bieszczadzkie anioły, anioły bieszczadzkie,
+gdy skrzydłem cię dotkną już jesteś ich bratem.
+
+Anioły są całe zielone,
+zwłaszcza te w Bieszczadach,
+łatwo w trawie się kryją
+i w opuszczonych sadach.
+W zielone grają ukradkiem,
+nawet karty mają zielone,
+zielone mają pojęcie,
+a nawet zielony kielonek.
+
+Anioły są wiecznie ulotne,
+zwłaszcza te w Bieszczadach,
+nas też czasami nosi
+po ich anielskich śladach.
+One nam przyzwalają
+i skrzydłem wskazują drogę
+i wtedy w nas się zapala
+wieczny bieszczadzki ogień.`
+  },
+  {
+    title: "Jest już za późno",
+    artist: "",
+    lyrics: `Jeszcze zdążymy w dżungli ludzkości siebie odnaleźć,
+tęskność zawrotna przybliża nas.
+Zbiegną się wreszcie tory sieroce naszych dwu planet,
+cudnie spokrewnią się ciała nam.
+
+Ref.:
+Jest już za późno!
+Nie jest za późno!
+Jest już za późno!
+Nie jest za późno!
+Jest już za późno!
+Nie jest za późno!
+
+Jeszcze zdążymy tanio wynająć małą mansardę
+z oknem na rzekę lub też na park.
+Z łożem szerokim, piecem wysokim, ściennym zegarem —
+schodzić będziemy codziennie w świat.
+
+Jeszcze zdążymy naszą miłością siebie zachwycić,
+siebie zachwycić i wszystko w krąg.
+Wojna to będzie straszna, bo czas nas będzie chciał zniszczyć,
+lecz nam się uda zachwycić go.`
+  },
+  {
+    title: "Bez słów",
+    artist: "",
+    lyrics: `Chodzą ulicami ludzie,
+maj przechodzą, lipiec, grudzień,
+zagubieni wśród ulic, bram.
+Przemarznięte grzeją dłonie,
+dokądś pędzą, za czymś gonią
+i budują wciąż domki z kart.
+
+Ref.:
+A tam w mech odziany kamień,
+tam zaduma w wiatru graniu,
+tam powietrze ma inny smak.
+Porzuć kroków rytm na bruku,
+spróbuj — znajdziesz, jeśli szukasz,
+zechcesz, nowy świat, własny świat.
+
+Płyną ludzie miastem szarzy,
+pozbawieni złudzeń, marzeń,
+omijają wciąż główny nurt.
+Kryją się w swych norach krecich
+i śnić nawet o karecie, co lśni złotem,
+nie potrafią już...
+
+Żyją ludzie, asfalt depczą,
+nikt nie krzyknie — każdy szepcze,
+drzwi zamknięte, zaklepany krąg...
+Tylko czasem kropla z oczu
+po policzku w dół się stoczy
+i to dziwne drżenie rąk...`
+  },
+  {
+    title: "Hej przyjaciele",
+    artist: "",
+    lyrics: `Tam dokąd chciałem już nie dojdę, szkoda zdzierać nóg.
+Już wędrówki naszej wspólnej nadchodzi kres.
+Wy pójdziecie inną drogą, zostawicie mnie.
+Odejdziecie, sam zostanę na rozstaju dróg.
+
+Ref.:
+Hej, przyjaciele! Zostańcie ze mną.
+Przecież wszystko to, co miałem, oddałem wam.
+Hej, przyjaciele! Choć chwilę jedną.
+Znowu w życiu mi nie wyszło, znowu jestem sam.
+
+Znów spóźniłem się na pociąg i odjechał już.
+Tylko jego mglisty koniec zamajaczył mi.
+Stoję smutny na peronie z tą walizką jedną,
+tak jak człowiek, który zgubił od swego domu klucz.
+
+Tam, dokąd chciałem, już nie dojdę, szkoda zdzierać nóg.
+Już wędrówki naszej wspólnej nadchodzi kres.
+Wy pójdziecie inną drogą, zostawicie mnie.
+Zamazanych drogowskazów nie odczytam już.`
+  },
+  {
+    title: "Stokrotka",
+    artist: "",
+    lyrics: `Gdzie strumyk płynie z wolna,
+rozsiewa zioła maj,
+stokrotka rosła polna,
+a nad nią szumiał gaj.
+W tym gaju tak ponuro,
+że aż przeraża mnie,
+ptaszęta za wysoko,
+a mnie samotnej źle.
+
+Wtem harcerz idzie z wolna.
+„Stokrotko, witam cię,
+twój urok mnie zachwyca,
+czy chcesz być mą, czy nie?"
+
+Stokrotka się zgodziła
+i poszli w ciemny las,
+a harcerz taki gapa
+w pokrzywy wlazł po pas.
+
+A ona, ona, ona,
+cóż biedna robić ma,
+nad gapą pochylona
+i śmieje się: ha, ha!`
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+//  LOGIKA APLIKACJI — nie musisz nic zmieniać poniżej
+// ═══════════════════════════════════════════════════════
+
+let current = 0;
+let fontSize = 18;
+
+const elCounter = document.getElementById('song-counter');
+const elTitle   = document.getElementById('song-title');
+const elArtist  = document.getElementById('song-artist');
+const elLyrics  = document.getElementById('lyrics');
+const elStage   = document.getElementById('stage');
+const elDots    = document.getElementById('dot-track');
+const btnPrev   = document.getElementById('btn-prev');
+const btnNext   = document.getElementById('btn-next');
+
+function buildDots() {
+  elDots.innerHTML = '';
+  const total = songs.length;
+  const maxDots = 9;
+  const count = Math.min(total, maxDots);
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('span');
+    d.className = 'dot';
+    d.dataset.idx = i < maxDots - 1 || total <= maxDots ? i : '…';
+    elDots.appendChild(d);
+  }
+}
+
+function updateDots() {
+  const dots = elDots.querySelectorAll('.dot');
+  const total = songs.length;
+  if (total <= 9) {
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  } else {
+    // sliding window
+    dots.forEach((d, i) => {
+      let mapped = current - Math.floor(dots.length / 2) + i;
+      mapped = Math.max(0, Math.min(total - 1, mapped));
+      d.classList.toggle('active', mapped === current);
+    });
+  }
+}
+
+function render(dir) {
+  const song = songs[current];
+  elCounter.textContent = `${current + 1} / ${songs.length}`;
+  elTitle.textContent   = song.title;
+  elArtist.textContent  = song.artist || '';
+  elLyrics.textContent  = song.lyrics;
+  elStage.scrollTop = 0;
+
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === songs.length - 1;
+  updateDots();
+
+  if (dir) {
+    elStage.classList.remove('swipe-left', 'swipe-right');
+    void elStage.offsetWidth; // reflow
+    elStage.classList.add(dir === 'next' ? 'swipe-left' : 'swipe-right');
+  }
+}
+
+function go(dir) {
+  if (dir === 'next' && current < songs.length - 1) { current++; render('next'); }
+  if (dir === 'prev' && current > 0)                { current--; render('prev'); }
+}
+
+btnNext.addEventListener('click', () => go('next'));
+btnPrev.addEventListener('click', () => go('prev'));
+
+// klawiatura (desktop)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go('next');
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go('prev');
+});
+
+// swipe dotykowy
+let touchX = null;
+elStage.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+elStage.addEventListener('touchend',   e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) go(dx < 0 ? 'next' : 'prev');
+  touchX = null;
+}, { passive: true });
+
+// rozmiar czcionki — przyciski
+document.getElementById('btn-plus').addEventListener('click', () => {
+  if (fontSize < 40) { fontSize += 2; elLyrics.style.fontSize = fontSize + 'px'; }
+});
+document.getElementById('btn-minus').addEventListener('click', () => {
+  if (fontSize > 10) { fontSize -= 2; elLyrics.style.fontSize = fontSize + 'px'; }
+});
+
+// rozmiar czcionki — pinch-to-zoom (dwa palce)
+let pinchDist0 = null;
+let fontSizeAtPinchStart = fontSize;
+
+function getPinchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+
+elStage.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    pinchDist0 = getPinchDist(e.touches);
+    fontSizeAtPinchStart = fontSize;
+  }
+}, { passive: true });
+
+elStage.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && pinchDist0 !== null) {
+    const scale = getPinchDist(e.touches) / pinchDist0;
+    const newSize = Math.round(fontSizeAtPinchStart * scale);
+    fontSize = Math.min(40, Math.max(10, newSize));
+    elLyrics.style.fontSize = fontSize + 'px';
+  }
+}, { passive: true });
+
+elStage.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinchDist0 = null;
+}, { passive: true });
+
+// INIT
+buildDots();
+render();
+</script>
+</body>
+</html>
